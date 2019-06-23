@@ -4,7 +4,7 @@ import os
 import random
 import string
 
-from twython import Twython
+from twython import Twython, TwythonError
 
 URL = "https://api.twitter.com/1.1/statuses/update.json"
 
@@ -15,7 +15,11 @@ def send_tweet(status):
     access_token = os.environ["TWITTER_TEST_ACCESS_TOKEN"]
     access_token_secret = os.environ["TWITTER_TEST_ACCESS_TOKEN_SECRET"]
     twitter = Twython(consumer_key, consumer_secret, access_token, access_token_secret)
-    twitter.update_status(status=status)
+    try:
+        response = twitter.update_status(status=status)
+        return None
+    except TwythonError as e:
+        return f"Error {e.error_code}: {e}"
 
 
 def _random_string(size=16, chars=string.ascii_uppercase + string.digits):
@@ -28,4 +32,8 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         status = f"{sys.argv[1]} {_random_string()} {_random_string()}"
         print(f"Tweeting {status}")
-        send_tweet(status)
+        s = send_tweet(status)
+        if s:
+            print(s)
+        else:
+            print("Success!")
