@@ -26,7 +26,7 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) > 1:
-        status = f"{sys.argv[1]} {RandomString.get()} {RandomString.get()}"
+        status = f"{sys.argv[1]} {RandomString.make()} {RandomString.make()}"
         print(f"Tweeting {status}")
         s = send_tweet(status)
         if s:
