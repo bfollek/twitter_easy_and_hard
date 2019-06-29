@@ -1,15 +1,6 @@
 #!/usr/bin/env python3
 
-import os
-
 import requests
-
-from random_string import RandomString
-
-URL = "https://api.twitter.com/1.1/statuses/update.json"
-
-# Good info here: what goes in the header, how to build it, etc.
-# https://developer.twitter.com/en/docs/basics/authentication/guides/authorizing-a-request.html
 
 def send_tweet(status):
     consumer_key = os.environ["TWITTER_TEST_CONSUMER_KEY"]
