@@ -1,35 +1,31 @@
 import string
 from time import time
+import urllib.parse
 
 from random_string import RandomString
 
 
 class OauthBuilder:
-    def __init__(self, consumer_key, consumer_secret, access_token, access_token_secret):
-        self._oauth_dict = {}
-        self._oauth_dict["oauth_consumer_key"] = consumer_key
+    """
+    https://developer.twitter.com/en/docs/basics/authentication/guides/authorizing-a-request.html
+    https://developer.twitter.com/en/docs/basics/authentication/guides/creating-a-signature.html
+    """
+
+    def __init__(
+        self,
+        consumer_key,
+        consumer_secret,
+        access_token,
+        access_token_secret,
+        request_params,
+    ):
+        self._oauth_dict = self._init_oauth_dict(
+            consumer_key, access_token, request_params
+        )
         self._consumer_secret = consumer_secret
-        self._oauth_dict["oauth_token"] = access_token
         self._access_token_secret = access_token_secret
 
-    def v1(self, request_params):
-        """
-        https://developer.twitter.com/en/docs/basics/authentication/guides/authorizing-a-request.html
-        https://developer.twitter.com/en/docs/basics/authentication/guides/creating-a-signature.html
-        """
-        # "...any approach which produces a relatively random alphanumeric string should be OK here."
-        self._oauth_dict["oauth_nonce"] = RandomString.make(chars=string.ascii_letters + string.digits)
-        self._oauth_dict["oauth_ssignature_method"] = "HMAC-SHA1"
-        # "...the number of seconds since the Unix epoch"
-        self._oauth_dict["oauth_timestamp"] = int(time())
-        # "The oauth_version parameter should always be 1.0 for any request sent to the Twitter API."
-        self._oauth_dict["oauth_version"] = "1.0"
-        self._oauth_dict["oauth_signature"] = self._make_signature(request_params)
-
-    def _make_signature(self, request_params):
-        return "TODO signature"
-
-    def _header_string(self):
+    def header(self):
         """
         To build the header string, imagine writing to a string named DST.
 
@@ -42,11 +38,40 @@ class OauthBuilder:
             Append a double quote ‘”’ to DST.
             If there are key/value pairs remaining, append a comma ‘,’ and a space ‘ ‘ to DST.
         """
-        s = “OAuth ”
+        pieces = []
+        for k, v in self._oauth_dict.items():
+            pieces.append(f'{self._percent_encode(k)}="{self._percent_encode(v)}"')
+        s = "OAuth " + ", ".join(pieces)
         return s
+
+    def _init_oauth_dict(self, consumer_key, access_token, request_params):
+        # Createe the keys in alpha order. The dict will preserve the order.
+        d = {}
+        d["oauth_consumer_key"] = consumer_key
+        # "...any approach which produces a relatively random alphanumeric string should be OK here."
+        d["oauth_nonce"] = RandomString.make(chars=string.ascii_letters + string.digits)
+        d["oauth_signature"] = None
+        d["oauth_signature_method"] = "HMAC-SHA1"
+        # "...the number of seconds since the Unix epoch"
+        d["oauth_timestamp"] = str(int(time()))
+        d["oauth_token"] = access_token
+        # "The oauth_version parameter should always be 1.0 for any request sent to the Twitter API."
+        d["oauth_version"] = "1.0"
+        # Do this after everything else is set
+        d["oauth_signature"] = self._make_signature(request_params)
+        return d
+
+    def _percent_encode(self, s):
+        return urllib.parse.quote(s.encode("utf-8"), safe="")
+
+    def _make_signature(self, request_params):
+        return "TODO signature"
 
 
 """
+
+URL = "https://api.twitter.com/1.1/statuses/update.json"
+
 The spec is from here:
 https://developer.twitter.com/en/docs/basics/authentication/guides/authorizing-a-request.html
 
@@ -247,14 +272,3 @@ The output of the HMAC signing function is a binary string. This needs to be bas
 OAuth signature 	hCtSmYh+iHYCEqBWrE7C7hYmtUk=
 
 """
-
-import os
-
-import requests
-
-from random_string import RandomString
-
-URL = "https://api.twitter.com/1.1/statuses/update.json"
-
-# Good info here: what goes in the header, how to build it, etc.
-# https://developer.twitter.com/en/docs/basics/authentication/guides/authorizing-a-request.html
