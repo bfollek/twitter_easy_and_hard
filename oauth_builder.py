@@ -63,7 +63,7 @@ class OauthBuilder:
         return d
 
     def _percent_encode(self, s):
-        return urllib.parse.quote(s.encode("utf-8"), safe="")
+        return urllib.parse.quote(bytes(s, "utf-8"), safe="")
 
     def _signature(
         self, http_method, url, request_params, consumer_secret, access_token_secret
