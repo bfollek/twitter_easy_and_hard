@@ -1,3 +1,5 @@
+from hashlib import sha1
+import hmac
 import string
 from time import time
 import urllib.parse
@@ -73,7 +75,9 @@ class OauthBuilder:
         sps = self._sig_param_string(request_params)
         sbs = self._sig_base_string(http_method, url, sps)
         sk = self._signing_key(consumer_secret, access_token_secret)
-        return "todo encrypt"
+        # Thanks, https://stackoverflow.com/questions/8338661/implementation-hmac-sha1-in-python
+        hashed = hmac.new(sk, sbs, sha1)
+        return hashed.digest().encode("base64").rstrip("\n")
 
     def _sig_param_string(self, request_params):
         """
