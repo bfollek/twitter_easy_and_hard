@@ -72,3 +72,13 @@ def test_signing_key():
         oa._signing_key(CONSUMER_SECRET, ACCESS_TOKEN_SECRET)
         == "kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw&LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE"
     )
+
+
+def test_signature():
+    oa = from_known_values()
+    assert (
+        oa._signature(
+            HTTP_METHOD, BASE_URL, REQUEST_PARAMS, CONSUMER_SECRET, ACCESS_TOKEN_SECRET
+        )
+        == "hCtSmYh+iHYCEqBWrE7C7hYmtUk="  # This signature is different from the one we used earlier
+    )

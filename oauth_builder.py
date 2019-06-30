@@ -1,3 +1,4 @@
+import base64
 from hashlib import sha1
 import hmac
 import string
@@ -71,13 +72,16 @@ class OauthBuilder:
         self, http_method, url, request_params, consumer_secret, access_token_secret
     ):
         """
+        Finally, the signature is calculated by passing the signature base string and signing key to the HMAC-SHA1 hashing algorithm. The details of the algorithm are explained hash_hmac function.
+
+        The output of the HMAC signing function is a binary string. This needs to be base64 encoded to produce the signature string.
         """
         sps = self._sig_param_string(request_params)
         sbs = self._sig_base_string(http_method, url, sps)
         sk = self._signing_key(consumer_secret, access_token_secret)
-        # Thanks, https://stackoverflow.com/questions/8338661/implementation-hmac-sha1-in-python
-        hashed = hmac.new(sk, sbs, sha1)
-        return hashed.digest().encode("base64").rstrip("\n")
+        hashed = hmac.digest(bytes(sk, "utf-8"), bytes(sbs, "utf-8"), sha1)
+        # base64encode, then decode back to a string
+        return base64.b64encode(hashed).decode("utf-8")
 
     def _sig_param_string(self, request_params):
         """
