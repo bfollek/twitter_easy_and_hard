@@ -22,10 +22,11 @@ class OauthBuilder:
         self._oauth_dict = self._init_oauth_dict(
             consumer_key, access_token, request_params
         )
-        self._consumer_secret = consumer_secret
-        self._access_token_secret = access_token_secret
+        self._oauth_dict["oauth_signature"] = self._signature(
+            consumer_secret, access_token_secret, request_params
+        )
 
-    def header(self):
+    def authorization_header(self):
         """
         To build the header string, imagine writing to a string named DST.
 
@@ -50,114 +51,47 @@ class OauthBuilder:
         d["oauth_consumer_key"] = consumer_key
         # "...any approach which produces a relatively random alphanumeric string should be OK here."
         d["oauth_nonce"] = RandomString.make(chars=string.ascii_letters + string.digits)
-        d["oauth_signature"] = None
+        d["oauth_signature"] = None  # Placeholder to get the order right
         d["oauth_signature_method"] = "HMAC-SHA1"
         # "...the number of seconds since the Unix epoch"
         d["oauth_timestamp"] = str(int(time()))
         d["oauth_token"] = access_token
         # "The oauth_version parameter should always be 1.0 for any request sent to the Twitter API."
         d["oauth_version"] = "1.0"
-        # Do this after everything else is set
-        d["oauth_signature"] = self._make_signature(request_params)
         return d
 
     def _percent_encode(self, s):
         return urllib.parse.quote(s.encode("utf-8"), safe="")
 
-    def _make_signature(self, request_params):
-        return "TODO signature"
+    def _signature(self, consumer_secret, access_token_secret, request_params):
+        """
+        The request parameters and the oauth_* values other than oauth_signature "need to be encoded into a single string which will be used later on. The process to build the string is very specific:
+
+        1. Percent encode every key and value that will be signed.
+        2. Sort the list of parameters alphabetically [1] by encoded key [2].
+        3. For each key/value pair:
+        4. Append the encoded key to the output string.
+        5. Append the ‘=’ character to the output string.
+        6. Append the encoded value to the output string.
+        7. If there are more key/value pairs remaining, append a ‘&’ character to the output string.
+
+        [1] 	Note: The OAuth spec says to sort lexigraphically, which is the default alphabetical sort for many libraries.
+
+        [2] 	Note: In case of two parameters with the same encoded key, the OAuth spec says to continue sorting based on value. However, Twitter does not accept duplicate keys in API requests.
+        "
+        """
+        # (1.) Percent-encode requests params. _oauth_dict is already percent-encoded.
+        param_dict = {
+            self._percent_encode(k): self._percent_encode(v)
+            for k, v in request_params.items()
+        }
+        # (2.) Put all values together.
+        return "todo"
 
 
 """
 
 URL = "https://api.twitter.com/1.1/statuses/update.json"
-
-The spec is from here:
-https://developer.twitter.com/en/docs/basics/authentication/guides/authorizing-a-request.html
-
-Twitter’s API relies on the OAuth 1.0a protocol. At a very simplified level, Twitter’s implementation requires that requests needing authorization contain an additional HTTP Authorization header with enough information to answer the questions listed above. A version of the HTTP request shown above, modified to include this header, looks like this (normally the Authorization header would need to be on one line, but has been wrapped for legibility here):
-
-POST /1.1/statuses/update.json?include_entities=true HTTP/1.1
-Accept: */*
-Connection: close
-User-Agent: OAuth gem v0.4.4
-Content-Type: application/x-www-form-urlencoded
-Authorization:
-OAuth oauth_consumer_key="xvz1evFS4wEEPTGEFPHBog",
-oauth_nonce="kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg",
-oauth_signature="tnnArxj06cWHq44gCs1OSKk%2FjLY%3D",
-oauth_signature_method="HMAC-SHA1",
-oauth_timestamp="1318622958",
-oauth_token="370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb",
-oauth_version="1.0"
-Content-Length: 76
-Host: api.twitter.com
-
-status=Hello%20Ladies%20%2b%20Gentlemen%2c%20a%20signed%20OAuth%20request%21
-
-Collecting parameters
-
-You should be able to see that the header contains 7 key/value pairs, where the keys all begin with the string “oauth_”. For any given Twitter API request, collecting these 7 values and creating a similar header will allow you to specify authorization for the request. How each value was generated is described below:
-
-Consumer key
-
-The oauth_consumer_key identifies which application is making the request. Obtain this value from the settings page for your Twitter app in the developer portal.
-oauth_consumer_key 	xvz1evFS4wEEPTGEFPHBog
-
-Nonce
-
-The oauth_nonce parameter is a unique token your application should generate for each unique request. Twitter will use this value to determine whether a request has been submitted multiple times. The value for this request was generated by base64 encoding 32 bytes of random data, and stripping out all non-word characters, but any approach which produces a relatively random alphanumeric string should be OK here.
-oauth_nonce 	kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg
-
-Signature
-
-The oauth_signature parameter contains a value which is generated by running all of the other request parameters and two secret values through a signing algorithm. The purpose of the signature is so that Twitter can verify that the request has not been modified in transit, verify the application sending the request, and verify that the application has authorization to interact with the user’s account.
-
-The process for calculating the oauth_signature for this request is described in Creating a signature.
-oauth_signature 	tnnArxj06cWHq44gCs1OSKk/jLY=
-
-Signature method
-
-The oauth_signature_method used by Twitter is HMAC-SHA1. This value should be used for any authorized request sent to Twitter’s API.
-oauth_signature_method 	HMAC-SHA1
-
-Timestamp
-
-The oauth_timestamp parameter indicates when the request was created. This value should be the number of seconds since the Unix epoch at the point the request is generated, and should be easily generated in most programming languages. Twitter will reject requests which were created too far in the past, so it is important to keep the clock of the computer generating requests in sync with NTP.
-oauth_timestamp 	1318622958
-
-Token
-
-The oauth_token parameter typically represents a user’s permission to share access to their account with your application. There are a few authentication requests where this value is not passed or is a different form of token, but those are covered in detail in Obtaining access tokens. For most general-purpose requests, you will use what is referred to as an access token.
-
-You can generate a valid access token for your account on the settings page for your Twitter app on the developer portal.
-oauth_token 	370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb
-
-Version
-
-The oauth_version parameter should always be 1.0 for any request sent to the Twitter API.
-oauth_version 	1.0
-
-To build the header string, imagine writing to a string named DST.
-
-    Append the string “OAuth ” (including the space at the end) to DST.
-    For each key/value pair of the 7 parameters listed above:
-        Percent encode the key and append it to DST.
-        Append the equals character ‘=’ to DST.
-        Append a double quote ‘”’ to DST.
-        Percent encode the value and append it to DST.
-        Append a double quote ‘”’ to DST.
-        If there are key/value pairs remaining, append a comma ‘,’ and a space ‘ ‘ to DST.
-
-Pay particular attention to the percent encoding of the values when building this string. For example, the oauth_signature value of tnnArxj06cWHq44gCs1OSKk/jLY= must be encoded as tnnArxj06cWHq44gCs1OSKk%2FjLY%3D.
-
-Performing these steps on the parameters collected above results in the following string:
-
-OAuth oauth_consumer_key="xvz1evFS4wEEPTGEFPHBog", oauth_nonce="kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg", oauth_signature="tnnArxj06cWHq44gCs1OSKk%2FjLY%3D", oauth_signature_method="HMAC-SHA1", oauth_timestamp="1318622958", oauth_token="370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb", oauth_version="1.0"
-
-This value should be set as the Authorization header for the request.
-
-https://developer.twitter.com/en/docs/basics/authentication/guides/creating-a-signature.html
 
 Creating a signature
 
