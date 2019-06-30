@@ -1,11 +1,21 @@
 from oauth_builder import OauthBuilder
 
+# Use public values from the twitter spec to test:
+# https://developer.twitter.com/en/docs/basics/authentication/guides/authorizing-a-request.html
+# https://developer.twitter.com/en/docs/basics/authentication/guides/creating-a-signature.html
 HTTP_METHOD = "post"
 BASE_URL = "https://api.twitter.com/1.1/statuses/update.json"
 REQUEST_PARAMS = {
     "include_entities": "true",
     "status": "Hello Ladies + Gentlemen, a signed OAuth request!",
 }
+CONSUMER_KEY = "xvz1evFS4wEEPTGEFPHBog"
+CONSUMER_SECRET = ""
+ACCESS_TOKEN = "370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb"
+ACCESS_TOKEN_SECRET = ""
+SIGNATURE = "tnnArxj06cWHq44gCs1OSKk/jLY="
+NONCE = "kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg"
+TIMESTAMP = "1318622958"
 
 
 def from_known_values():
@@ -17,14 +27,14 @@ def from_known_values():
         HTTP_METHOD,
         BASE_URL,
         REQUEST_PARAMS,
-        "xvz1evFS4wEEPTGEFPHBog",
-        "no consumer secret",
-        "370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb",
-        "no access key secret",
+        CONSUMER_KEY,
+        CONSUMER_SECRET,
+        ACCESS_TOKEN,
+        ACCESS_TOKEN_SECRET,
     )
-    oa._oauth_dict["oauth_nonce"] = "kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg"
-    oa._oauth_dict["oauth_timestamp"] = "1318622958"
-    oa._oauth_dict["oauth_signature"] = "tnnArxj06cWHq44gCs1OSKk/jLY="
+    oa._oauth_dict["oauth_nonce"] = NONCE
+    oa._oauth_dict["oauth_timestamp"] = TIMESTAMP
+    oa._oauth_dict["oauth_signature"] = SIGNATURE
     return oa
 
 

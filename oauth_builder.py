@@ -72,6 +72,7 @@ class OauthBuilder:
         """
         sps = self._sig_param_string(request_params)
         sbs = self._sig_base_string(http_method, url, sps)
+        sk = self._signing_key(consumer_secret, access_token_secret)
         return "todo encrypt"
 
     def _sig_param_string(self, request_params):
@@ -132,6 +133,12 @@ class OauthBuilder:
         """
         s = f"{http_method.upper()}&{self._percent_encode(url)}&{self._percent_encode(sig_param_string)}"
         return s
+
+    def _signing_key(self, consumer_secret, access_token_secret):
+        """
+        The signing key is simply the percent encoded consumer secret, followed by an ampersand character ‘&’, followed by the percent encoded token secret.
+        """
+        return f"{self._percent_encode(consumer_secret)}&{self._percent_encode(access_token_secret)}"
 
 
 """
