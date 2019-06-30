@@ -1,6 +1,6 @@
 from oauth_builder import OauthBuilder
 
-# Use public values from the twitter spec to test:
+# Use public values from the twitter example to test:
 # https://developer.twitter.com/en/docs/basics/authentication/guides/authorizing-a-request.html
 # https://developer.twitter.com/en/docs/basics/authentication/guides/creating-a-signature.html
 HTTP_METHOD = "post"
@@ -13,7 +13,9 @@ CONSUMER_KEY = "xvz1evFS4wEEPTGEFPHBog"
 CONSUMER_SECRET = "kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw"
 ACCESS_TOKEN = "370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb"
 ACCESS_TOKEN_SECRET = "LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE"
-SIGNATURE = "tnnArxj06cWHq44gCs1OSKk/jLY="
+SIGNATURE_1 = "tnnArxj06cWHq44gCs1OSKk/jLY="
+# The twitter example uses a different signature on the signature page
+SIGNATURE_2 = "hCtSmYh+iHYCEqBWrE7C7hYmtUk="
 NONCE = "kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg"
 TIMESTAMP = "1318622958"
 
@@ -34,7 +36,7 @@ def from_known_values():
     )
     oa._oauth_dict["oauth_nonce"] = NONCE
     oa._oauth_dict["oauth_timestamp"] = TIMESTAMP
-    oa._oauth_dict["oauth_signature"] = SIGNATURE
+    oa._oauth_dict["oauth_signature"] = SIGNATURE_1
     return oa
 
 
@@ -80,5 +82,5 @@ def test_signature():
         oa._signature(
             HTTP_METHOD, BASE_URL, REQUEST_PARAMS, CONSUMER_SECRET, ACCESS_TOKEN_SECRET
         )
-        == "hCtSmYh+iHYCEqBWrE7C7hYmtUk="  # This signature is different from the one we used earlier
+        == SIGNATURE_2
     )
