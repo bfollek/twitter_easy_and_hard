@@ -65,28 +65,54 @@ class OauthBuilder:
 
     def _signature(self, consumer_secret, access_token_secret, request_params):
         """
-        The request parameters and the oauth_* values other than oauth_signature "need to be encoded into a single string which will be used later on. The process to build the string is very specific:
+        """
+        s = self._make_sig_string(request_params)
+        # todo encrypt
+        return s
 
-        1. Percent encode every key and value that will be signed.
-        2. Sort the list of parameters alphabetically [1] by encoded key [2].
+    def _make_sig_string(self, request_params):
+        """
+        The request parameters and the oauth_* values other than oauth_signature need to be encoded into a single string which will be used later on. The process to build the string is very specific:
+
+        (See _make_sig_dict() for 1. and 2.)
         3. For each key/value pair:
         4. Append the encoded key to the output string.
         5. Append the ‘=’ character to the output string.
         6. Append the encoded value to the output string.
         7. If there are more key/value pairs remaining, append a ‘&’ character to the output string.
-
-        [1] 	Note: The OAuth spec says to sort lexigraphically, which is the default alphabetical sort for many libraries.
-
-        [2] 	Note: In case of two parameters with the same encoded key, the OAuth spec says to continue sorting based on value. However, Twitter does not accept duplicate keys in API requests.
-        "
         """
-        # (1.) Percent-encode requests params. _oauth_dict is already percent-encoded.
-        param_dict = {
+        sig_dict = self._make_sig_dict(request_params)
+        pieces = []
+        for k, v in sig_dict.items():
+            pieces.append(f"{k}={v}")
+        s = "&".join(pieces)
+        return s
+
+    def _make_sig_dict(self, request_params):
+        """
+        1. Percent encode every key and value that will be signed.
+        2. Sort the list of parameters alphabetically [1] by encoded key [2].
+
+        [1] Note: The OAuth spec says to sort lexigraphically, which is the default alphabetical sort for many libraries.
+
+        [2] Note: In case of two parameters with the same encoded key, the OAuth spec says to continue sorting based on value. However, Twitter does not accept duplicate keys in API requests.
+        """
+        # Percent-encode requests params. _oauth_dict is already percent-encoded.
+        params_encoded = {
             self._percent_encode(k): self._percent_encode(v)
             for k, v in request_params.items()
         }
-        # (2.) Put all values together.
-        return "todo"
+        # Put all values together, in alpha key order. Ignore the edge case where a request param key
+        # matches one of the oauth keys.
+        sig_dict = {}
+        keys = sorted(list(params_encoded.keys()) + list(self._oauth_dict.keys()))
+        keys.remove("oauth_signature")
+        for k in keys:
+            if k in params_encoded:
+                sig_dict[k] = params_encoded[k]
+            else:
+                sig_dict[k] = self._oauth_dict[k]
+        return sig_dict
 
 
 """
