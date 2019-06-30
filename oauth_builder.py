@@ -13,17 +13,19 @@ class OauthBuilder:
 
     def __init__(
         self,
+        http_method,
+        url,
+        request_params,
         consumer_key,
         consumer_secret,
         access_token,
         access_token_secret,
-        request_params,
     ):
         self._oauth_dict = self._init_oauth_dict(
             consumer_key, access_token, request_params
         )
         self._oauth_dict["oauth_signature"] = self._signature(
-            consumer_secret, access_token_secret, request_params
+            http_method, url, request_params, consumer_secret, access_token_secret
         )
 
     def authorization_header(self):
@@ -63,14 +65,16 @@ class OauthBuilder:
     def _percent_encode(self, s):
         return urllib.parse.quote(s.encode("utf-8"), safe="")
 
-    def _signature(self, consumer_secret, access_token_secret, request_params):
+    def _signature(
+        self, http_method, url, request_params, consumer_secret, access_token_secret
+    ):
         """
         """
-        s = self._make_sig_string(request_params)
-        # todo encrypt
-        return s
+        sps = self._sig_param_string(request_params)
+        sbs = self._sig_base_string(http_method, url, sps)
+        return "todo encrypt"
 
-    def _make_sig_string(self, request_params):
+    def _sig_param_string(self, request_params):
         """
         The request parameters and the oauth_* values other than oauth_signature need to be encoded into a single string which will be used later on. The process to build the string is very specific:
 
@@ -81,14 +85,14 @@ class OauthBuilder:
         6. Append the encoded value to the output string.
         7. If there are more key/value pairs remaining, append a ‘&’ character to the output string.
         """
-        sig_dict = self._make_sig_dict(request_params)
+        sig_dict = self._sig_dict(request_params)
         pieces = []
         for k, v in sig_dict.items():
             pieces.append(f"{k}={v}")
         s = "&".join(pieces)
         return s
 
-    def _make_sig_dict(self, request_params):
+    def _sig_dict(self, request_params):
         """
         1. Percent encode every key and value that will be signed.
         2. Sort the list of parameters alphabetically [1] by encoded key [2].
@@ -113,6 +117,21 @@ class OauthBuilder:
             else:
                 sig_dict[k] = self._oauth_dict[k]
         return sig_dict
+
+    def _sig_base_string(self, http_method, url, sig_param_string):
+        """
+        The three values collected so far must be joined to make a single string, from which the signature will be generated. This is called the signature base string by the OAuth specification.
+
+        To encode the HTTP method, base URL, and parameter string into a single string:
+
+        1. Convert the HTTP Method to uppercase and set the output string equal to this value.
+        2. Append the ‘&’ character to the output string.
+        3. Percent encode the URL and append it to the output string.
+        4. Append the ‘&’ character to the output string.
+        5. Percent encode the parameter string and append it to the output string.
+        """
+        s = f"{http_method.upper()}&{self._percent_encode(url)}&{self._percent_encode(sig_param_string)}"
+        return s
 
 
 """
