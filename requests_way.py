@@ -19,7 +19,7 @@ def send_tweet(status):
     return r.status_code
 
 
-def send_tweet2(status):
+def send_tweet_hard(status):
     url = "https://api.twitter.com/1.1/statuses/update.json"
     request_params = {"status": status}
     consumer_key = os.environ["TWITTER_TEST_CONSUMER_KEY"]
@@ -53,7 +53,7 @@ if __name__ == "__main__":
             print(f"Bad status: {rv}")
         status = f"{sys.argv[1]} {RandomString.make()} {RandomString.make()}"
         print(f"Tweeting {status}")
-        rv = send_tweet2(status)
+        rv = send_tweet_hard(status)
         if rv == 200:
             print("Success!")
         else:
