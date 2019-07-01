@@ -7,36 +7,32 @@ from requests_oauthlib import OAuth1
 from oauth_builder import OauthBuilder
 from random_string import RandomString
 
+CONSUMER_KEY = os.environ["TWITTER_TEST_CONSUMER_KEY"]
+CONSUMER_SECRET = os.environ["TWITTER_TEST_CONSUMER_SECRET"]
+ACCESS_TOKEN = os.environ["TWITTER_TEST_ACCESS_TOKEN"]
+ACCESS_TOKEN_SECRET = os.environ["TWITTER_TEST_ACCESS_TOKEN_SECRET"]
+URL = "https://api.twitter.com/1.1/statuses/update.json"
+
 
 def send_tweet(status):
-    consumer_key = os.environ["TWITTER_TEST_CONSUMER_KEY"]
-    consumer_secret = os.environ["TWITTER_TEST_CONSUMER_SECRET"]
-    access_token = os.environ["TWITTER_TEST_ACCESS_TOKEN"]
-    access_token_secret = os.environ["TWITTER_TEST_ACCESS_TOKEN_SECRET"]
-    auth = OAuth1(consumer_key, consumer_secret, access_token, access_token_secret)
-    url = "https://api.twitter.com/1.1/statuses/update.json"
-    r = requests.post(url, data={"status": status}, auth=auth)
+    auth = OAuth1(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+    r = requests.post(URL, data={"status": status}, auth=auth)
     return r.status_code
 
 
 def send_tweet_hard(status):
-    url = "https://api.twitter.com/1.1/statuses/update.json"
     request_params = {"status": status}
-    consumer_key = os.environ["TWITTER_TEST_CONSUMER_KEY"]
-    consumer_secret = os.environ["TWITTER_TEST_CONSUMER_SECRET"]
-    access_token = os.environ["TWITTER_TEST_ACCESS_TOKEN"]
-    access_token_secret = os.environ["TWITTER_TEST_ACCESS_TOKEN_SECRET"]
     oa = OauthBuilder(
         "post",
-        url,
+        URL,
         request_params,
-        consumer_key,
-        consumer_secret,
-        access_token,
-        access_token_secret,
+        CONSUMER_KEY,
+        CONSUMER_SECRET,
+        ACCESS_TOKEN,
+        ACCESS_TOKEN_SECRET,
     )
     headers = {"authorization": oa.authorization_header()}
-    r = requests.post(url, data=request_params, headers=headers)
+    r = requests.post(URL, data=request_params, headers=headers)
     return r.status_code
 
 
