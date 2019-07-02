@@ -32,9 +32,9 @@ Lots of finicky steps, lots of detail, but nothing really daunting. And examples
 
 Now I have some understanding and appreciation of what OAuth does:
 
-* The secrets don't leave the sender. The sender uses them as input to a hash, along with a bunch of public values. The hash travels along with the public values. The receiver grabs its own local values for the secrets, adds the public values it received, and builds its own version of the hash. If the secrets don't match, the hashes won't match, and the request isn't authorized.
+* The secrets don't leave the sender. The sender uses them as input to the signature, a hash, that's also built from a bunch of public values. The signature travels along with the public values. The receiver grabs its own local values for the secrets, adds the public values it received, and builds its own version of the signature. If the secrets don't match, the signatures won't match, and the request isn't authorized.
 
-* The public values are a bunch of OAuth values and the details of the request: http method, url, and parameters. If someone tampers with the request in transit and changes any of these, the hashes won't match, and the request isn't authorized.
+* The public values are a bunch of OAuth values and the details of the request: http method, url, and parameters. If someone tampers with the request in transit and changes any of these, the signaturees won't match, and the request isn't authorized.
 
 So there are two levels of security:
 * Shared secrets;
