@@ -21,7 +21,7 @@ What's the point? I got curious about the magic. Pass in the four magic values:
 * access_token
 * access_token_secret
 
-and OAuth is happy. But how? Why? How does it work?
+and OAuth 1 is happy. But how? Why? How does it work?
 
 These Twitter specs lay out the magic:
 
@@ -30,7 +30,7 @@ These Twitter specs lay out the magic:
 
 Lots of finicky steps, lots of detail, but nothing really daunting. And examples with well-defined inputs and outputs, so you can write unit tests. I coded it up in oauth_builder.py.
 
-Now I have some understanding and appreciation of what OAuth does:
+Now I have some understanding and appreciation of what OAuth 1 does:
 
 * The secrets don't leave the sender. The sender uses them as input to the signature, a hash, that's also built from a bunch of public values. The signature travels along with the public values. The receiver grabs its own local values for the secrets, adds the public values it received, and builds its own version of the signature. If the secrets don't match, the signatures won't match, and the request isn't authorized.
 
@@ -40,6 +40,4 @@ So there are two levels of security:
 * Shared secrets;
 * A tamper-resistant message.
 
-Of course everything's traveling over SSL, too.
-
-I'm not a crypto/security person, but this feels pretty robust.
+Interestingly, Oauth 2 drops the signature, sends the shared client secret over the wire, and relies just on SSL to keep everything safe. Apparently one of the concerns behind the change was the complexity of the signature algorithm. Oh well. It was fun to code.
